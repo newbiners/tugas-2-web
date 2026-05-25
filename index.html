@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SITTA – Sistem Informasi Tata Kelola Bahan Ajar UT</title>
+  <meta name="description" content="Aplikasi pemesanan dan distribusi bahan ajar Universitas Terbuka berbasis Vue.js" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .hero {
+      min-height: calc(100vh - 64px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 3rem 2rem;
+      background: radial-gradient(ellipse at 60% 40%, rgba(59,130,246,0.12) 0%, transparent 70%),
+                  radial-gradient(ellipse at 20% 80%, rgba(139,92,246,0.1) 0%, transparent 60%);
+    }
+    .hero-inner { text-align: center; max-width: 720px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.3);
+      color: #93c5fd; padding: 6px 16px; border-radius: 20px;
+      font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em;
+      text-transform: uppercase; margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; line-height: 1.15;
+      background: linear-gradient(135deg, #fff 0%, #93c5fd 50%, #818cf8 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 1rem;
+    }
+    .hero p { font-size: 1.1rem; color: #64748b; margin-bottom: 2.5rem; }
+    .hero-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: left; margin-top: 2rem; }
+    .hero-card {
+      background: rgba(26,34,53,0.8); border: 1px solid #2a3650;
+      border-radius: 16px; padding: 1.5rem;
+      text-decoration: none; color: inherit;
+      transition: all 0.25s ease;
+      backdrop-filter: blur(10px);
+    }
+    .hero-card:hover {
+      border-color: #3b82f6; transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(59,130,246,0.2);
+    }
+    .hero-card-icon {
+      width: 52px; height: 52px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; margin-bottom: 1rem;
+    }
+    .hero-card-icon.blue { background: rgba(59,130,246,0.15); }
+    .hero-card-icon.purple { background: rgba(139,92,246,0.15); }
+    .hero-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .hero-card p { font-size: 0.85rem; color: #64748b; line-height: 1.5; }
+    .hero-card .arrow {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.8rem; color: #3b82f6; font-weight: 600;
+      margin-top: 0.75rem;
+    }
+    .footer-info {
+      text-align: center; padding: 2rem;
+      border-top: 1px solid #1e293b; color: #475569; font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="navbar-brand">
+      <div class="logo">UT</div>
+      <div>
+        <span>SITTA</span>
+        <small>Universitas Terbuka</small>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link active">
+        <span class="icon">🏠</span><span>Beranda</span>
+      </a>
+      <a href="stok.html" class="nav-link">
+        <span class="icon">📦</span><span>Stok Bahan Ajar</span>
+      </a>
+      <a href="tracking.html" class="nav-link">
+        <span class="icon">🚚</span><span>Tracking DO</span>
+      </a>
+    </div>
+  </nav>
+
+  <main class="hero">
+    <div class="hero-inner">
+      <div class="hero-badge">🎓 Tugas Praktik 2 — Vue.js</div>
+      <h1>Sistem Informasi Tata Kelola Bahan Ajar</h1>
+      <p>Platform manajemen stok dan distribusi bahan ajar Universitas Terbuka berbasis Vue.js</p>
+
+      <div class="hero-cards">
+        <a href="stok.html" class="hero-card">
+          <div class="hero-card-icon blue">📦</div>
+          <h3>Stok Bahan Ajar</h3>
+          <p>Kelola inventaris bahan ajar seluruh UT daerah, monitor status stok, dan tambahkan data baru.</p>
+          <div class="arrow">Buka Halaman →</div>
+        </a>
+        <a href="tracking.html" class="hero-card">
+          <div class="hero-card-icon purple">🚚</div>
+          <h3>Tracking Delivery Order</h3>
+          <p>Buat dan pantau status pengiriman DO bahan ajar kepada mahasiswa secara real-time.</p>
+          <div class="arrow">Buka Halaman →</div>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer-info">
+    <p>Tugas Praktik 2 · Vue.js Framework · Universitas Terbuka · 2025</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tracking Delivery Order – SITTA UT</title>
+  <meta name="description" content="Tracking pengiriman Delivery Order bahan ajar Universitas Terbuka" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .search-bar {
+      display: flex; gap: 0.75rem; align-items: center;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .search-bar input { flex: 1; min-width: 0; }
+    .status-steps {
+      display: flex; gap: 0; margin: 0.5rem 0 0.75rem;
+    }
+    .step {
+      flex: 1; text-align: center; padding: 6px 4px;
+      font-size: 0.7rem; font-weight: 600;
+      background: var(--bg-primary); color: var(--text-muted);
+      border-top: 3px solid var(--border);
+      transition: var(--transition);
+    }
+    .step.done { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+    .step.current { border-color: var(--orange); color: var(--orange); background: var(--orange-bg); }
+    .harga-preview {
+      background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1));
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: var(--radius-sm); padding: 0.75rem 1rem;
+      margin-top: 0.75rem; display: flex; justify-content: space-between; align-items: center;
+    }
+    .harga-preview .label { font-size: 0.8rem; color: var(--text-muted); }
+    .harga-preview .value { font-size: 1.25rem; font-weight: 800; color: var(--accent); }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="navbar-brand">
+      <div class="logo">UT</div>
+      <div><span>SITTA</span><small>Universitas Terbuka</small></div>
+    </a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link"><span class="icon">🏠</span><span>Beranda</span></a>
+      <a href="stok.html" class="nav-link"><span class="icon">📦</span><span>Stok Bahan Ajar</span></a>
+      <a href="tracking.html" class="nav-link active"><span class="icon">🚚</span><span>Tracking DO</span></a>
+    </div>
+  </nav>
+
+  <div id="app">
+    <div class="page-header">
+      <h1>🚚 Tracking Delivery Order</h1>
+      <p>Buat dan pantau status pengiriman DO bahan ajar mahasiswa</p>
+    </div>
+
+    <div class="main-content">
+
+      <!-- ALERT -->
+      <div v-if="alert.show" :class="['alert', 'alert-' + alert.type]">
+        <span>{{ alert.icon }}</span>
+        <span>{{ alert.msg }}</span>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon blue">📋</div>
+          <div>
+            <div class="stat-label">Total DO</div>
+            <div class="stat-value">{{ doList.length }}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">🚚</div>
+          <div>
+            <div class="stat-label">Dalam Perjalanan</div>
+            <div class="stat-value orange">{{ jumlahDalamPerjalanan }}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div>
+            <div class="stat-label">Terkirim</div>
+            <div class="stat-value green">{{ jumlahTerkirim }}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">💰</div>
+          <div>
+            <div class="stat-label">Total Nilai DO</div>
+            <div class="stat-value" style="font-size:1rem;">Rp {{ formatRupiah(totalNilaiDO) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEARCH BAR -->
+      <div class="search-bar">
+        <span>🔍</span>
+        <input type="text" v-model="searchQuery" placeholder="Cari nomor DO, NIM, atau nama mahasiswa..." id="inputSearch" />
+        <button class="btn btn-ghost btn-sm" v-show="searchQuery !== ''" @click="searchQuery = ''">✕ Hapus</button>
+        <span style="font-size:0.8rem; color:#64748b; white-space:nowrap;">{{ filteredDO.length }} hasil</span>
+      </div>
+
+      <!-- DAFTAR DO -->
+      <div v-if="filteredDO.length === 0" class="empty-state" style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);">
+        <div class="icon">📭</div>
+        <p v-if="searchQuery">Tidak ada DO yang cocok dengan "{{ searchQuery }}"</p>
+        <p v-else>Belum ada Delivery Order. Klik tombol <strong>+ Buat DO Baru</strong> untuk memulai.</p>
+      </div>
+
+      <div v-for="item in filteredDO" :key="item.nomorDO" class="do-card">
+        <div class="do-card-header">
+          <div>
+            <div class="do-number">{{ item.nomorDO }}</div>
+            <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">{{ item.tanggalKirim }}</div>
+          </div>
+          <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+            <span class="badge badge-neutral">🚁 {{ item.ekspedisi }}</span>
+            <span :class="['badge', badgeStatusClass(item.status)]">{{ statusIcon(item.status) }} {{ item.status }}</span>
+            <button class="btn btn-ghost btn-sm" @click="toggleExpand(item.nomorDO)" :id="'btn-expand-' + item.nomorDO">
+              {{ expandedDO === item.nomorDO ? '▲ Sembunyikan' : '▼ Detail' }}
+            </button>
+            <button class="btn btn-warning btn-sm" @click="updateStatus(item)" :id="'btn-status-' + item.nomorDO">
+              🔄 Update Status
+            </button>
+          </div>
+        </div>
+
+        <div class="do-card-body">
+          <div class="do-field">
+            <label>NIM</label>
+            <p v-text="item.nim"></p>
+          </div>
+          <div class="do-field">
+            <label>Nama Mahasiswa</label>
+            <p v-text="item.nama"></p>
+          </div>
+          <div class="do-field">
+            <label>Paket</label>
+            <p>{{ item.namaPaket }}</p>
+          </div>
+          <div class="do-field">
+            <label>Total Harga</label>
+            <p style="color:#22c55e; font-weight:700;">Rp {{ formatRupiah(item.totalHarga) }}</p>
+          </div>
+        </div>
+
+        <!-- Timeline (v-show untuk collapse) -->
+        <div class="timeline" v-show="expandedDO === item.nomorDO">
+          <h4>📍 Riwayat Perjalanan</h4>
+          <div v-if="item.perjalanan.length === 0" style="color:#64748b; font-size:0.85rem;">Belum ada update perjalanan.</div>
+          <div v-for="(pj, idx) in item.perjalanan" :key="idx" class="timeline-item">
+            <div class="timeline-dot-wrap">
+              <div class="timeline-dot" :style="{ background: idx === item.perjalanan.length - 1 ? '#f97316' : '#3b82f6' }"></div>
+              <div class="timeline-line"></div>
+            </div>
+            <div class="timeline-content">
+              <p>{{ pj.keterangan }}</p>
+              <small>{{ pj.waktu }}</small>
+            </div>
+          </div>
+          <!-- Tambah update perjalanan -->
+          <div style="margin-top:0.75rem; display:flex; gap:0.5rem;">
+            <input type="text" v-model="newPerjalananMap[item.nomorDO]" :placeholder="'Tambah keterangan pengiriman untuk ' + item.nomorDO" :id="'input-pj-' + item.nomorDO" />
+            <button class="btn btn-primary btn-sm" @click="tambahPerjalanan(item)" :id="'btn-pj-' + item.nomorDO">➕ Tambah</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOMBOL BUAT DO BARU -->
+      <div style="margin-top:1.5rem; text-align:right;">
+        <button class="btn btn-primary" @click="bukaModalDO" id="btnBuatDO" style="padding:10px 24px; font-size:0.95rem;">
+          ➕ Buat DO Baru
+        </button>
+      </div>
+
+      <!-- ── MODAL BUAT DO ── -->
+      <div class="modal-overlay" v-if="showModalDO" @click.self="showModalDO=false">
+        <div class="modal" style="max-width:600px;">
+          <div class="modal-header">
+            <h3>➕ Buat Delivery Order Baru</h3>
+            <button class="btn btn-ghost btn-sm btn-icon" @click="showModalDO=false">✕</button>
+          </div>
+          <div class="modal-body">
+
+            <!-- Nomor DO otomatis -->
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label>Nomor DO (otomatis)</label>
+              <input type="text" :value="nomorDOBaru" disabled style="opacity:0.7; font-family:monospace; font-weight:700; color:#93c5fd;" id="inputNomorDO" />
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label>NIM <span class="required">*</span></label>
+                <input type="text" v-model.trim="formDO.nim" placeholder="contoh: 123456789" id="inputNimDO" />
+                <span class="error-msg" v-if="errDO.nim">{{ errDO.nim }}</span>
+              </div>
+              <div class="form-group">
+                <label>Nama Mahasiswa <span class="required">*</span></label>
+                <input type="text" v-model.trim="formDO.nama" placeholder="Nama lengkap" id="inputNamaDO" />
+                <span class="error-msg" v-if="errDO.nama">{{ errDO.nama }}</span>
+              </div>
+              <div class="form-group">
+                <label>Ekspedisi <span class="required">*</span></label>
+                <select v-model="formDO.ekspedisi" id="inputEkspedisiDO">
+                  <option value="">-- Pilih Ekspedisi --</option>
+                  <option v-for="ex in pengirimanList" :key="ex.kode" :value="ex.nama">{{ ex.nama }}</option>
+                </select>
+                <span class="error-msg" v-if="errDO.ekspedisi">{{ errDO.ekspedisi }}</span>
+              </div>
+              <div class="form-group">
+                <label>Tanggal Kirim <span class="required">*</span></label>
+                <div style="display:flex; gap:6px;">
+                  <input type="date" v-model="formDO.tanggalKirim" id="inputTanggalDO" style="flex:1;" />
+                  <button class="btn btn-ghost btn-sm" @click="formDO.tanggalKirim = hariIni()" type="button" title="Gunakan tanggal hari ini">📅</button>
+                </div>
+                <span class="error-msg" v-if="errDO.tanggalKirim">{{ errDO.tanggalKirim }}</span>
+              </div>
+              <div class="form-group span2">
+                <label>Paket Bahan Ajar <span class="required">*</span></label>
+                <select v-model="formDO.paketKode" id="inputPaketDO">
+                  <option value="">-- Pilih Paket --</option>
+                  <option v-for="p in paket" :key="p.kode" :value="p.kode">{{ p.kode }} – {{ p.nama }}</option>
+                </select>
+                <span class="error-msg" v-if="errDO.paketKode">{{ errDO.paketKode }}</span>
+
+                <!-- Detail Paket (muncul setelah pilih) -->
+                <div class="paket-detail" v-if="paketDipilih">
+                  <h5>📚 Isi Paket: {{ paketDipilih.nama }}</h5>
+                  <div class="isi-list">
+                    <span class="isi-item" v-for="mk in paketDipilih.isi" :key="mk">{{ mk }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Total Harga Preview -->
+            <div class="harga-preview" v-if="paketDipilih">
+              <div>
+                <div class="label">Total Harga</div>
+                <div style="font-size:0.75rem; color:#64748b;">Diambil otomatis dari data paket</div>
+              </div>
+              <div class="value">Rp {{ formatRupiah(paketDipilih.harga) }}</div>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-ghost" @click="showModalDO=false">Batal</button>
+            <button class="btn btn-primary" @click="simpanDO" id="btnSimpanDO">🚀 Buat DO</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL UPDATE STATUS -->
+      <div class="modal-overlay" v-if="showModalStatus" @click.self="showModalStatus=false">
+        <div class="modal" style="max-width:400px;">
+          <div class="modal-header">
+            <h3>🔄 Update Status DO</h3>
+            <button class="btn btn-ghost btn-sm btn-icon" @click="showModalStatus=false">✕</button>
+          </div>
+          <div class="modal-body">
+            <p style="font-size:0.9rem; color:#64748b; margin-bottom:1rem;">
+              DO: <strong style="color:#93c5fd;">{{ doStatusTarget ? doStatusTarget.nomorDO : '' }}</strong>
+            </p>
+            <div class="form-group">
+              <label>Pilih Status Baru</label>
+              <select v-model="statusBaru" id="selectStatusBaru">
+                <option v-for="s in statusOptions" :key="s" :value="s">{{ s }}</option>
+              </select>
+            </div>
+            <!-- Progress steps -->
+            <div class="status-steps" style="margin-top:1rem;">
+              <div v-for="s in statusOptions" :key="s"
+                :class="['step',
+                  statusOptions.indexOf(s) < statusOptions.indexOf(statusBaru) ? 'done' :
+                  s === statusBaru ? 'current' : ''
+                ]">
+                {{ s }}
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-ghost" @click="showModalStatus=false">Batal</button>
+            <button class="btn btn-primary" @click="simpanStatus" id="btnSimpanStatus">💾 Simpan Status</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main-content -->
+  </div><!-- /#app -->
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <script src="js/dataBahanAjar.js"></script>
+  <script src="js/tracking-app.js"></script>
+</body>
+</html>
